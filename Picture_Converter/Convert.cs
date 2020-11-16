@@ -14,6 +14,8 @@ namespace Picture_Converter
         static List<FileInfo> allFiles = new List<FileInfo>();  // Liste mit Pfad zu den Dateien
         static List<FileInfo> filesToConvert = new List<FileInfo>();  // Liste mit Pfad zu den Dateien die Convertiert werden müssen
         static List<DirectoryInfo> folders = new List<DirectoryInfo>(); // Liste mit Ordner/Dateien auf die es keinen Zugriff hat
+        static List<string> filesToDelete = new List<string>();
+        static List<string> filesToRename = new List<string>();
         public static void FullDirList(DirectoryInfo dir)
         {
             Console.WriteLine("Directory {0}", dir.FullName);
@@ -60,6 +62,7 @@ namespace Picture_Converter
             var inputArray = filesToConvert.ToArray();
             string outputName;
             int currentProcessCount = 0;
+            
 
             for (int i = 0; i < inputArray.Length; i++)
             {
@@ -72,16 +75,16 @@ namespace Picture_Converter
                     Process dwebp = new Process();
                     dwebp.StartInfo.FileName = $"{Environment.CurrentDirectory}/dwebp.exe";
                     dwebp.StartInfo.Arguments = $"\"{inputArray[i].FullName}\" -o \"{outputFullName}\"";
-                    dwebp.StartInfo.WindowStyle = ProcessWindowStyle.Hidden; //Hide windows so you dont get console windows spam when converting 100+ files.
-                    dwebp.EnableRaisingEvents = true; //To enable .Exited call.
+                    dwebp.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    dwebp.EnableRaisingEvents = true; 
                     dwebp.Exited += (s, e) =>
                     {
                         File.Delete(inputArray[i].FullName);
                     };
                     dwebp.Start();
 
-                    if (currentProcessCount >= 0) //When max processes reached. wait for processes to finish before starting more.
-                        dwebp.WaitForExit(); //Wait for process to finish before continueing.
+                    if (currentProcessCount >= 0) 
+                        dwebp.WaitForExit(); 
                 }
                 else
                 {
@@ -89,9 +92,20 @@ namespace Picture_Converter
                     {
                         outputName = Path.GetFileNameWithoutExtension(inputArray[i].FullName) + ".png";
                         var outputFullName = inputArray[i].DirectoryName + "\\" + outputName;
-                        Image image = Image.FromFile(inputArray[i].FullName);
-                        image.Save(outputFullName, ImageFormat.Png);
-                        File.Delete(inputArray[i].FullName);
+                        var oldOutputFullname = "";
+                        using (var imageBitmap = new Bitmap(inputArray[i].FullName))
+                        {
+                            if (outputFullName == inputArray[i].FullName)
+                            {
+                                oldOutputFullname = outputFullName;
+                                outputName = Path.GetFileNameWithoutExtension(inputArray[i].FullName) + "_converted"+".png";
+                                outputFullName = inputArray[i].DirectoryName + "\\" + outputName;
+                                filesToRename.Add(outputFullName);
+                            }
+                            imageBitmap.Save(outputFullName, ImageFormat.Png);
+                            filesToDelete.Add(inputArray[i].FullName);
+                        }
+                            
                     }
                     catch (Exception e)
                     {
@@ -99,6 +113,35 @@ namespace Picture_Converter
                     }
                     
                 }
+            }
+            Rename(filesToRename);
+            Delete(filesToDelete);
+        }
+
+        private static void Delete(List<string> filesToDelete)
+        {
+            var inputArray = filesToDelete.ToArray();
+
+            for (int i = 0; i < inputArray.Length; i++)
+            {
+                File.Delete(inputArray[i]);
+            }
+        }
+
+        private static void Rename(List<string> filesToRename)
+        {
+            var inputArray = filesToRename.ToArray();
+
+            for (int i = 0; i < inputArray.Length; i++)
+            {
+                var nameToConvert = Path.GetFileNameWithoutExtension(inputArray[i]);
+                var pathToFileToConvert =inputArray[i];
+
+                string newName = nameToConvert.Split(new string[] { "_converted" }, StringSplitOptions.RemoveEmptyEntries)[0];
+
+                var newPathToFileToConvert = Path.GetDirectoryName(inputArray[i])+"\\"+newName+".png";
+
+                System.IO.File.Move("pathToFileToConvert", "newPathToFileToConvert");
             }
         }
 
