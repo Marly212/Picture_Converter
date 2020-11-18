@@ -10,13 +10,22 @@ namespace Picture_Converter
         {
             try
             {
-                DirectoryInfo dir = new DirectoryInfo(Settings.Default.Path);
+                if (File.Exists("log"))
+                {
+                    File.Delete("log");
+                }
 
-                Convert.FullDirList(dir);
-                //if (args[0] == "Convert")
-                //{
-                //    Convert.ConvertPictures();
-                //}
+                //DirectoryInfo dir = new DirectoryInfo(Settings.Default.Path);
+
+                //Convert.FullDirList(dir);
+                if (args[0] == "Convert")
+                {
+                    Logger.Log.Ging("Beginne Converten");
+                    DirectoryInfo dir = new DirectoryInfo(Settings.Default.Path);
+                    Convert.FullDirList(dir);
+                }
+                
+
             }
             catch (Exception e)
             {

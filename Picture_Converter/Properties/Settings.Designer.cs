@@ -34,5 +34,17 @@ namespace Picture_Converter.Properties {
                 this["Path"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Program Files\\Windows B\\dwebp\\")]
+        public string dwebp {
+            get {
+                return ((string)(this["dwebp"]));
+            }
+            set {
+                this["dwebp"] = value;
+            }
+        }
     }
 }

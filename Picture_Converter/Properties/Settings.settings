@@ -5,5 +5,8 @@
     <Setting Name="Path" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\Users\bruce.lieber\Desktop\Testbilder\</Value>
     </Setting>
+    <Setting Name="dwebp" Type="System.String" Scope="User">
+      <Value Profile="(Default)">C:\Program Files\Windows B\dwebp\</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{5B1D0050-86FD-43BF-87E8-A2C06CFC49CE}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <RootNamespace>Picture_Converter</RootNamespace>
     <AssemblyName>Picture_Converter</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>

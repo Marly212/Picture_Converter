@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Picture_Converter.Properties;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -18,17 +19,24 @@ namespace Picture_Converter
         static List<string> filesToRename = new List<string>();
         public static void FullDirList(DirectoryInfo dir)
         {
-            Console.WriteLine("Directory {0}", dir.FullName);
+            //Console.WriteLine("Now working in Directory {0}", dir.FullName);
+            Logger.Log.Ging($"Now working in Directory {dir.FullName}");
             // list the files
             try
             {
                 foreach (FileInfo f in dir.GetFiles())
                 {
                     byte[] imageInBytes = File.ReadAllBytes(f.FullName.ToString());
+                    var fileName = Path.GetFileNameWithoutExtension(f.FullName.ToString());
+                    var extension = Path.GetExtension(f.FullName.ToString());
                     var imageFormat = GetImageFormat(imageInBytes);
 
                     if (imageFormat == ImageFormat2.png)
                     {
+                        if (extension == ".jpg")
+                        {
+                            File.Move(f.FullName.ToString(), f.DirectoryName+"\\"+fileName+".png");
+                        }
                         allFiles.Add(f);
                     }
                     else
@@ -37,13 +45,12 @@ namespace Picture_Converter
                         allFiles.Add(f);
                     }
                 }
-                Logger.Log.Ging(filesToConvert.ToString());
                 ConvertToPNG(filesToConvert);
             }
             catch(Exception e)
             {
-                Console.WriteLine("Directory {0}  \n could not be accessed!!!!", dir.FullName);
-                Console.WriteLine(e.Message);
+                Logger.Log.Ging($"Directory {dir.FullName} could not be Accessed");
+                Logger.Log.Ging(e.Message);
                 return;  // Überspringt das aktuelle Verzeichnis da wir keinen Zugriff darauf haben
             }
 
@@ -59,90 +66,102 @@ namespace Picture_Converter
 
         private static void ConvertToPNG(List<FileInfo> filesToConvert)
         {
-            var inputArray = filesToConvert.ToArray();
+            //var inputArray = filesToConvert.ToArray();
             string outputName;
             int currentProcessCount = 0;
-            
+            int converted = 0;
+            string currentImage = "";
 
-            for (int i = 0; i < inputArray.Length; i++)
+            try
             {
-                var extension = inputArray[i].Extension;
-
-                if (extension == ".webp")
+                for (int i = 0; i < filesToConvert.Count; i++)
                 {
-                    outputName = Path.GetFileNameWithoutExtension(inputArray[i].FullName) + ".png";
-                    var outputFullName = inputArray[i].DirectoryName + "\\" + outputName;
-                    Process dwebp = new Process();
-                    dwebp.StartInfo.FileName = $"{Environment.CurrentDirectory}/dwebp.exe";
-                    dwebp.StartInfo.Arguments = $"\"{inputArray[i].FullName}\" -o \"{outputFullName}\"";
-                    dwebp.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                    dwebp.EnableRaisingEvents = true; 
-                    dwebp.Exited += (s, e) =>
-                    {
-                        File.Delete(inputArray[i].FullName);
-                    };
-                    dwebp.Start();
+                    currentImage = filesToConvert[i].FullName;
+                    var extension = filesToConvert[i].Extension;
 
-                    if (currentProcessCount >= 0) 
-                        dwebp.WaitForExit(); 
-                }
-                else
-                {
-                    try
+                    if (extension == ".webp")
                     {
-                        outputName = Path.GetFileNameWithoutExtension(inputArray[i].FullName) + ".png";
-                        var outputFullName = inputArray[i].DirectoryName + "\\" + outputName;
-                        var oldOutputFullname = "";
-                        using (var imageBitmap = new Bitmap(inputArray[i].FullName))
+                        outputName = Path.GetFileNameWithoutExtension(filesToConvert[i].FullName) + ".png";
+                        var outputFullName = filesToConvert[i].DirectoryName + "\\" + outputName;
+                        Process dwebp = new Process();
+                        dwebp.StartInfo.FileName = $"{Settings.Default.dwebp}/bin/dwebp.exe";
+                        dwebp.StartInfo.Arguments = $"\"{filesToConvert[i].FullName}\" -o \"{outputFullName}\"";
+                        dwebp.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                        dwebp.EnableRaisingEvents = true;
+                        dwebp.Exited += (s, e) =>
                         {
-                            if (outputFullName == inputArray[i].FullName)
+                            File.Delete(filesToConvert[i].FullName);
+                        };
+                        dwebp.Start();
+
+                        if (currentProcessCount >= 0)
+                            dwebp.WaitForExit();
+                    }
+                    else
+                    {
+                        outputName = Path.GetFileNameWithoutExtension(filesToConvert[i].FullName) + ".png";
+                        var outputFullName = filesToConvert[i].DirectoryName + "\\" + outputName;
+                        var oldOutputFullname = "";
+                        using (var imageBitmap = new Bitmap(filesToConvert[i].FullName))
+                        {
+                            if (outputFullName == filesToConvert[i].FullName)
                             {
                                 oldOutputFullname = outputFullName;
-                                outputName = Path.GetFileNameWithoutExtension(inputArray[i].FullName) + "_converted"+".png";
-                                outputFullName = inputArray[i].DirectoryName + "\\" + outputName;
+                                outputName = Path.GetFileNameWithoutExtension(filesToConvert[i].FullName) + "_converted" + ".png";
+                                outputFullName = filesToConvert[i].DirectoryName + "\\" + outputName;
                                 filesToRename.Add(outputFullName);
+                                imageBitmap.Save(outputFullName, ImageFormat.Png);
                             }
-                            imageBitmap.Save(outputFullName, ImageFormat.Png);
-                            filesToDelete.Add(inputArray[i].FullName);
+                            else
+                            {
+                                imageBitmap.Save(outputFullName, ImageFormat.Png);
+                                filesToDelete.Add(filesToConvert[i].FullName);
+                            }
                         }
-                            
                     }
-                    catch (Exception e)
-                    {
-
-                    }
-                    
+                    converted++;
+                    Logger.Log.Ging($"Fertig mit dem Bild {currentImage}");
                 }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log.Ging(ex.Message+$" Fehler bei Bild: {currentImage}");
             }
             Rename(filesToRename);
             Delete(filesToDelete);
+            filesToConvert.Clear();
+            Logger.Log.Ging($"Fertig mit dem Ordner, {converted} Bilder wurden Verarbeitet");
         }
 
         private static void Delete(List<string> filesToDelete)
         {
-            var inputArray = filesToDelete.ToArray();
+            //var inputArray = filesToDelete.ToArray();
 
-            for (int i = 0; i < inputArray.Length; i++)
+            for (int i = 0; i < filesToDelete.Count; i++)
             {
-                File.Delete(inputArray[i]);
+                File.Delete(filesToDelete[i]);
             }
+            filesToDelete.Clear();
         }
 
         private static void Rename(List<string> filesToRename)
         {
-            var inputArray = filesToRename.ToArray();
+            //var inputArray = filesToRename.ToArray();
 
-            for (int i = 0; i < inputArray.Length; i++)
+            for (int i = 0; i < filesToRename.Count; i++)
             {
-                var nameToConvert = Path.GetFileNameWithoutExtension(inputArray[i]);
-                var pathToFileToConvert =inputArray[i];
+                var nameToConvert = Path.GetFileNameWithoutExtension(filesToRename[i]);
+                var pathToFileToConvert = filesToRename[i];
 
                 string newName = nameToConvert.Split(new string[] { "_converted" }, StringSplitOptions.RemoveEmptyEntries)[0];
 
-                var newPathToFileToConvert = Path.GetDirectoryName(inputArray[i])+"\\"+newName+".png";
+                var newPathToFileToConvert = Path.GetDirectoryName(filesToRename[i])+"\\"+newName+".png";
 
-                System.IO.File.Move("pathToFileToConvert", "newPathToFileToConvert");
+                File.Delete(newPathToFileToConvert);
+
+                File.Move(pathToFileToConvert, newPathToFileToConvert);
             }
+            filesToRename.Clear();
         }
 
         public enum ImageFormat2
