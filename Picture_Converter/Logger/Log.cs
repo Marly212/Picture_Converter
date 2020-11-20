@@ -7,7 +7,7 @@ namespace Picture_Converter.Logger
     {
         public static void Ging(string me)
         {
-            File.AppendAllLines(Environment.CurrentDirectory+"log", new string[] { me });
+            File.AppendAllLines("log", new string[] { me });
         }
     }
 }

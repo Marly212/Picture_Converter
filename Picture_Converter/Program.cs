@@ -15,17 +15,16 @@ namespace Picture_Converter
                     File.Delete("log");
                 }
 
-                //DirectoryInfo dir = new DirectoryInfo(Settings.Default.Path);
+                Logger.Log.Ging("Beginne Converten");
+                DirectoryInfo dir = new DirectoryInfo(Settings.Default.Path);
+                Convert.FullDirList(dir);
 
-                //Convert.FullDirList(dir);
-                if (args[0] == "Convert")
-                {
-                    Logger.Log.Ging("Beginne Converten");
-                    DirectoryInfo dir = new DirectoryInfo(Settings.Default.Path);
-                    Convert.FullDirList(dir);
-                }
-                
-
+                //if (args[0] == "Convert")
+                //{
+                //    Logger.Log.Ging("Beginne Converten");
+                //    DirectoryInfo dir = new DirectoryInfo(Settings.Default.Path);
+                //    Convert.FullDirList(dir);
+                //}
             }
             catch (Exception e)
             {
